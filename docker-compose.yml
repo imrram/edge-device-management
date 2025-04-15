@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - backend_network
+
+  device-simulator:
+    build: ./device-simulator
+    depends_on:
+      - mosquitto
+    environment:
+      - BROKER=mosquitto
+      - BROKER_PORT=1884
+    networks:
+      - backend_network
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mosquitto
+    environment:
+      - BROKER=mosquitto
+    networks:
+      - backend_network
+  
+  mosquitto:
+    image: eclipse-mosquitto:2.0.21
+    container_name: mosquitto
+    ports:
+      - "1884:1884"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    environment:
+      - BROKER=mosquitto
+      - BROKER_PORT=1884
+    networks:
+      - backend_network
+
+
+networks:
+  backend_network:
+    driver: bridge
